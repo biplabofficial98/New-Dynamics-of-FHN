@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitzHugh-Nagumo Oscillator: All Dynamical Modes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+        
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .panel h2 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        .mode-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .mode-btn {
+            padding: 12px 8px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .mode-btn:hover:not(.active) {
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #4a5568;
+            font-size: 0.9em;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        
+        .value-display {
+            font-size: 0.85em;
+            color: #667eea;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .equations {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .mode-info {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .mode-info h3 {
+            margin-bottom: 8px;
+            font-size: 1.2em;
+        }
+        
+        .mode-info p {
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+        
+        canvas {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            background: white;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .visualization-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .parameter-map-panel {
+            grid-column: 1 / -1;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid #333;
+        }
+        
+        .reset-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        @media (max-width: 1200px) {
+            .visualization-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .top-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .mode-selector {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .mode-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FitzHugh-Nagumo Oscillator</h1>
+        <p class="subtitle">Exploring All Dynamical Modes: Excitable, Oscillatory, Bistable & Chaotic</p>
+        
+        <div class="top-grid">
+            <div class="panel">
+                <h2>🎛️ Mode Selection & Controls</h2>
+                
+                <div class="equations">
+                    <strong>FitzHugh-Nagumo Equations:</strong><br>
+                    dv/dt = v - v³/3 - w + I<br>
+                    dw/dt = ε(v + a - bw)
+                </div>
+                
+                <div class="mode-selector">
+                    <div class="mode-btn active" data-mode="excitable">
+                        🎯 Excitable<br>
+                        <small>Threshold Response</small>
+                    </div>
+                    <div class="mode-btn" data-mode="oscillatory">
+                        🌀 Oscillatory<br>
+                        <small>Limit Cycle</small>
+                    </div>
+                    <div class="mode-btn" data-mode="bistable">
+                        ⚖️ Bistable<br>
+                        <small>Two States</small>
+                    </div>
+                    <div class="mode-btn" data-mode="chaotic">
+                        🌪️ Chaotic<br>
+                        <small>Complex Dynamics</small>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="a-slider">a (excitability):</label>
+                        <input type="range" id="a-slider" min="-2" max="2" step="0.01" value="0.7">
+                        <span class="value-display" id="a-value">0.70</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="b-slider">b (recovery):</label>
+                        <input type="range" id="b-slider" min="0.1" max="2" step="0.01" value="0.8">
+                        <span class="value-display" id="b-value">0.80</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="epsilon-slider">ε (time scale):</label>
+                        <input type="range" id="epsilon-slider" min="0.001" max="0.5" step="0.001" value="0.08">
+                        <span class="value-display" id="epsilon-value">0.080</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="current-slider">I (current):</label>
+                        <input type="range" id="current-slider" min="-0.5" max="1.5" step="0.01" value="0">
+                        <span class="value-display" id="current-value">0.00</span>
+                    </div>
+                </div>
+                
+                <button class="reset-btn" id="reset-btn">🔄 Reset Simulation</button>
+                
+                <div class="mode-info" id="mode-info">
+                    <h3>Current Mode: Excitable</h3>
+                    <p>System rests at stable fixed point. Perturbations above threshold cause large excursions (spikes) before returning to rest. Like a neuron firing an action potential.</p>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h2>📈 Time Series Dynamics</h2>
+                <canvas id="timeSeries" width="500" height="320"></canvas>
+            </div>
+        </div>
+        
+        <div class="visualization-grid">
+            <div class="panel">
+                <h2>🌀 Phase Portrait (v vs w)</h2>
+                <canvas id="phasePortrait" width="400" height="320"></canvas>
+                <p style="text-align: center; margin-top: 10px; font-size: 0.85em; color: #666;">
+                    Click to set initial conditions
+                </p>
+            </div>
+            
+            <div class="panel">
+                <h2>🎯 Nullclines & Vector Field</h2>
+                <canvas id="nullclines" width="400" height="320"></canvas>
+            </div>
+        </div>
+        
+        <div class="panel parameter-map-panel">
+            <h2>🗺️ Parameter Space Bifurcation Diagram</h2>
+            <canvas id="parameterMap" width="800" height="400"></canvas>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff6b6b"></div>
+                    <span>Excitable Regime</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4ecdc4"></div>
+                    <span>Oscillatory Regime</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #45b7d1"></div>
+                    <span>Bistable Regime</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f093fb"></div>
+                    <span>Chaotic/Complex</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #000"></div>
+                    <span>Current Parameters</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class FHNOscillator {
+            constructor() {
+                this.a = 0.7;
+                this.b = 0.8;
+                this.epsilon = 0.08;
+                this.I = 0;
+                this.dt = 0.005;
+                this.t = 0;
+                this.v = -1;
+                this.w = 0;
+                this.history = [];
+                this.maxHistory = 4000;
+                this.currentMode = 'excitable';
+                this.animationSpeed = 1;
+                this.forceAmplitude = 0;
+                this.forceFreq = 0.5;
+                
+                this.initializeElements();
+                this.setupEventListeners();
+                this.applyMode('excitable');
+                this.animate();
+            }
+            
+            initializeElements() {
+                this.timeCanvas = document.getElementById('timeSeries');
+                this.timeCtx = this.timeCanvas.getContext('2d');
+                this.phaseCanvas = document.getElementById('phasePortrait');
+                this.phaseCtx = this.phaseCanvas.getContext('2d');
+                this.nullCanvas = document.getElementById('nullclines');
+                this.nullCtx = this.nullCanvas.getContext('2d');
+                this.paramCanvas = document.getElementById('parameterMap');
+                this.paramCtx = this.paramCanvas.getContext('2d');
+                
+                this.aSlider = document.getElementById('a-slider');
+                this.bSlider = document.getElementById('b-slider');
+                this.epsilonSlider = document.getElementById('epsilon-slider');
+                this.currentSlider = document.getElementById('current-slider');
+                this.resetBtn = document.getElementById('reset-btn');
+                this.modeInfo = document.getElementById('mode-info');
+                this.modeButtons = document.querySelectorAll('.mode-btn');
+            }
+            
+            setupEventListeners() {
+                // Parameter sliders
+                this.aSlider.oninput = (e) => {
+                    this.a = parseFloat(e.target.value);
+                    document.getElementById('a-value').textContent = this.a.toFixed(2);
+                    this.updateParameterMap();
+                };
+                
+                this.bSlider.oninput = (e) => {
+                    this.b = parseFloat(e.target.value);
+                    document.getElementById('b-value').textContent = this.b.toFixed(2);
+                    this.updateParameterMap();
+                };
+                
+                this.epsilonSlider.oninput = (e) => {
+                    this.epsilon = parseFloat(e.target.value);
+                    document.getElementById('epsilon-value').textContent = this.epsilon.toFixed(3);
+                    this.updateParameterMap();
+                };
+                
+                this.currentSlider.oninput = (e) => {
+                    this.I = parseFloat(e.target.value);
+                    document.getElementById('current-value').textContent = this.I.toFixed(2);
+                    this.updateParameterMap();
+                };
+                
+                // Mode buttons
+                this.modeButtons.forEach(btn => {
+                    btn.onclick = () => {
+                        const mode = btn.getAttribute('data-mode');
+                        this.applyMode(mode);
+                    };
+                });
+                
+                // Reset button
+                this.resetBtn.onclick = () => {
+                    this.reset();
+                };
+                
+                // Phase portrait click
+                this.phaseCanvas.onclick = (e) => {
+                    const rect = this.phaseCanvas.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / this.phaseCanvas.width;
+                    const y = (e.clientY - rect.top) / this.phaseCanvas.height;
+                    this.v = (x - 0.5) * 6; // Scale to [-3, 3]
+                    this.w = (0.5 - y) * 4; // Scale to [-2, 2]
+                    this.history = [];
+                    this.t = 0;
+                };
+            }
+            
+            applyMode(mode) {
+                this.currentMode = mode;
+                
+                // Update active button
+                this.modeButtons.forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+                
+                let modeTitle = '';
+                let description = '';
+                
+                switch(mode) {
+                    case 'excitable':
+                        // Classic excitable parameters
+                        this.a = 0.7; this.b = 0.8; this.epsilon = 0.08; this.I = 0;
+                        this.forceAmplitude = 0;
+                        modeTitle = 'Excitable Mode';
+                        description = 'System rests at stable fixed point. Perturbations above threshold cause large excursions (spikes) before returning to rest. Like a neuron firing an action potential.';
+                        break;
+                        
+                    case 'oscillatory':
+                        // Self-sustained oscillation parameters
+                        this.a = 0.7; this.b = 0.8; this.epsilon = 0.08; this.I = 0.7;
+                        this.forceAmplitude = 0;
+                        modeTitle = 'Oscillatory Mode (Limit Cycle)';
+                        description = 'Self-sustained oscillations without external stimulus. The system naturally evolves to a stable limit cycle, like a pacemaker neuron.';
+                        break;
+                        
+                    case 'bistable':
+                        // Bistable parameters - two coexisting attractors
+                        this.a = -0.5; this.b = 1.5; this.epsilon = 0.01; this.I = 0;
+                        this.forceAmplitude = 0;
+                        modeTitle = 'Bistable Mode';
+                        description = 'Two coexisting stable states (fixed points or limit cycles). Final state depends on initial conditions. Click different regions in phase space to see switching.';
+                        break;
+                        
+                    case 'chaotic':
+                        // Parameters that produce complex/chaotic behavior with forcing
+                        this.a = 0.7; this.b = 0.8; this.epsilon = 0.1; this.I = 0.5;
+                        this.forceAmplitude = 0.3; // External periodic forcing
+                        this.forceFreq = 0.8;
+                        modeTitle = 'Chaotic/Complex Mode';
+                        description = 'Complex irregular dynamics due to external periodic forcing. Shows sensitivity to initial conditions and aperiodic behavior.';
+                        break;
+                }
+                
+                // Update UI
+                this.updateSliders();
+                this.modeInfo.innerHTML = `<h3>${modeTitle}</h3><p>${description}</p>`;
+                this.reset();
+                this.drawParameterMap();
+            }
+            
+            updateSliders() {
+                this.aSlider.value = this.a;
+                this.bSlider.value = this.b;
+                this.epsilonSlider.value = this.epsilon;
+                this.currentSlider.value = this.I;
+                
+                document.getElementById('a-value').textContent = this.a.toFixed(2);
+                document.getElementById('b-value').textContent = this.b.toFixed(2);
+                document.getElementById('epsilon-value').textContent = this.epsilon.toFixed(3);
+                document.getElementById('current-value').textContent = this.I.toFixed(2);
+            }
+            
+            reset() {
+                this.t = 0;
+                this.history = [];
+                
+                // Set appropriate initial conditions for each mode
+                switch(this.currentMode) {
+                    case 'excitable':
+                        this.v = -1; this.w = 0;
+                        break;
+                    case 'oscillatory':
+                        this.v = -1; this.w = 0;
+                        break;
+                    case 'bistable':
+                        this.v = -1.5; this.w = 0;
+                        break;
+                    case 'chaotic':
+                        this.v = -0.5; this.w = 0.2;
+                        break;
+                }
+            }
+            
+            updateParameterMap() {
+                this.drawParameterMap();
+            }
+            
+            step() {
+                // Add external forcing for chaotic mode
+                let forcing = 0;
+                if (this.currentMode === 'chaotic') {
+                    forcing = this.forceAmplitude * Math.sin(2 * Math.PI * this.forceFreq * this.t);
+                }
+                
+                const dv = this.v - Math.pow(this.v, 3)/3 - this.w + this.I + forcing;
+                const dw = this.epsilon * (this.v + this.a - this.b * this.w);
+                
+                this.v += dv * this.dt;
+                this.w += dw * this.dt;
+                this.t += this.dt;
+                
+                // Store history
+                this.history.push({t: this.t, v: this.v, w: this.w});
+                if (this.history.length > this.maxHistory) {
+                    this.history.shift();
+                }
+            }
+            
+            drawTimeSeries() {
+                const ctx = this.timeCtx;
+                const canvas = this.timeCanvas;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid
+                ctx.strokeStyle = '#f0f0f0';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]);
+                
+                // Horizontal grid lines
+                for (let i = 1; i < 4; i++) {
+                    const y = (i / 4) * canvas.height;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                // Vertical grid lines
+                for (let i = 1; i < 5; i++) {
+                    const x = (i / 5) * canvas.width;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                
+                ctx.setLineDash([]);
+                
+                // Zero line
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height/2);
+                ctx.lineTo(canvas.width, canvas.height/2);
+                ctx.stroke();
+                
+                if (this.history.length < 2) return;
+                
+                const timeSpan = 50; // Show last 50 time units
+                const startTime = Math.max(0, this.t - timeSpan);
+                
+                // Draw v(t)
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                let started = false;
+                
+                for (let i = 0; i < this.history.length; i++) {
+                    const point = this.history[i];
+                    if (point.t < startTime) continue;
+                    
+                    const x = ((point.t - startTime) / timeSpan) * canvas.width;
+                    const y = canvas.height/2 - point.v * canvas.height/8;
+                    
+                    if (!started) {
+                        ctx.moveTo(x, y);
+                        started = true;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw w(t)
+                ctx.strokeStyle = '#f093fb';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                started = false;
+                
+                for (let i = 0; i < this.history.length; i++) {
+                    const point = this.history[i];
+                    if (point.t < startTime) continue;
+                    
+                    const x = ((point.t - startTime) / timeSpan) * canvas.width;
+                    const y = canvas.height/2 - point.w * canvas.height/6;
+                    
+                    if (!started) {
+                        ctx.moveTo(x, y);
+                        started = true;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+                
+                // Labels and legend
+                ctx.fillStyle = '#667eea';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText('v(t)', 10, 25);
+                ctx.fillStyle = '#f093fb';
+                ctx.fillText('w(t)', 10, 45);
+                
+                // Current values
+                if (this.history.length > 0) {
+                    const last = this.history[this.history.length - 1];
+                    ctx.fillStyle = '#4a5568';
+                    ctx.font = '12px sans-serif';
+                    ctx.fillText(`v = ${last.v.toFixed(3)}`, canvas.width - 100, 25);
+                    ctx.fillText(`w = ${last.w.toFixed(3)}`, canvas.width - 100, 40);
+                    ctx.fillText(`t = ${last.t.toFixed(1)}`, canvas.width - 100, 55);
+                }
+            }
+            
+            drawPhasePortrait() {
+                const ctx = this.phaseCtx;
+                const canvas = this.phaseCanvas;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw grid
+                ctx.strokeStyle = '#f0f0f0';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]);
+                
+                // Grid lines
+                for (let i = 1; i < 5; i++) {
+                    const x = (i / 5) * canvas.width;
+                    const y = (i / 5) * canvas.height;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+                
+                ctx.setLineDash([]);
+                
+                // Axes
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 2;
+                
+                // v axis (vertical through center)
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2, 0);
+                ctx.lineTo(canvas.width/2, canvas.height);
+                ctx.stroke();
+                
+                // w axis (horizontal through center)
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height/2);
+                ctx.lineTo(canvas.width, canvas.height/2);
+                ctx.stroke();
+                
+                // Draw trajectory
+                if (this.history.length > 1) {
+                    // Gradient trail effect
+                    const trailLength = Math.min(500, this.history.length);
+                    const startIdx = this.history.length - trailLength;
+                    
+                    for (let i = startIdx; i < this.history.length - 1; i++) {
+                        if (i < 0) continue;
+                        
+                        const point1 = this.history[i];
+                        const point2 = this.history[i + 1];
+                        
+                        const x1 = (point1.v + 3) / 6 * canvas.width;
+                        const y1 = (-point1.w + 2) / 4 * canvas.height;
+                        const x2 = (point2.v + 3) / 6 * canvas.width;
+                        const y2 = (-point2.w + 2) / 4 * canvas.height;
+                        
+                        const alpha = (i - startIdx) / trailLength;
+                        ctx.strokeStyle = `rgba(102, 126, 234, ${alpha * 0.8})`;
+                        ctx.lineWidth = 2 + alpha;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.stroke();
+                    }
+                }
+                
+                // Draw current point
+                if (this.history.length > 0) {
+                    const last = this.history[this.history.length - 1];
+                    const x = (last.v + 3) / 6 * canvas.width;
+                    const y = (-last.w + 2) / 4 * canvas.height;
+                    
+                    ctx.fillStyle = '#ff6b6b';
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, 2*Math.PI);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+                
+                // Axis labels
+                ctx.fillStyle = '#4a5568';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText('v', canvas.width - 20, canvas.height/2 - 10);
+                ctx.fillText('w', canvas.width/2 + 10, 20);
+                
+                // Scale labels
+                ctx.font = '10px sans-serif';
+                ctx.fillText('-3', 5, canvas.height/2 - 5);
+                ctx.fillText('3', canvas.width - 15, canvas.height/2 - 5);
+                ctx.fillText('2', canvas.width/2 + 5, 15);
+                ctx.fillText('-2', canvas.width/2 + 5, canvas.height - 5);
+            }
+            
+            drawNullclines() {
+                const ctx = this.nullCtx;
+                const canvas = this.nullCanvas;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw axes
+                ctx.strokeStyle = '#ccc';
+                ctx.lineWidth = 2;
+                
+                // v axis
+                ctx.beginPath();
+                ctx.moveTo(canvas.width/2, 0);
+                ctx.lineTo(canvas.width/2, canvas.height);
+                ctx.stroke();
+                
+                // w axis
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height/2);
+                ctx.lineTo(canvas.width, canvas.height/2);
+                ctx.stroke();
+                
+                // Draw v-nullcline: dv/dt = 0 → w = v - v³/3 + I
+                ctx.strokeStyle = '#4ecdc4';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                
+                let firstPoint = true;
+                for (let i = 0; i < canvas.width; i++) {
+                    const v = (i / canvas.width - 0.5) * 6; // v from -3 to 3
+                    const w = v - Math.pow(v, 3)/3 + this.I;
+                    const x = i;
+                    const y = (-w + 2) / 4 * canvas.height;
+                    
+                    if (y >= 0 && y <= canvas.height) {
+                        if (firstPoint) {
+                            ctx.moveTo(x, y);
+                            firstPoint = false;
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw w-nullcline: dw/dt = 0 → v + a - bw = 0 → w = (v + a)/b
+                ctx.strokeStyle = '#ff9ff3';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                
+                firstPoint = true;
+                for (let i = 0; i < canvas.width; i++) {
+                    const v = (i / canvas.width - 0.5) * 6;
+                    const w = (v + this.a) / this.b;
+                    const x = i;
+                    const y = (-w + 2) / 4 * canvas.height;
+                    
+                    if (y >= 0 && y <= canvas.height) {
+                        if (firstPoint) {
+                            ctx.moveTo(x, y);
+                            firstPoint = false;
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                }
+                ctx.stroke();
+                
+                // Draw vector field
+                ctx.strokeStyle = 'rgba(74, 85, 104, 0.4)';
+                ctx.lineWidth = 1;
+                
+                for (let i = 25; i < canvas.width; i += 30) {
+                    for (let j = 25; j < canvas.height; j += 30) {
+                        const v = (i / canvas.width - 0.5) * 6;
+                        const w = (-j / canvas.height + 0.5) * 4;
+                        
+                        let forcing = 0;
+                        if (this.currentMode === 'chaotic') {
+                            forcing = this.forceAmplitude * Math.sin(2 * Math.PI * this.forceFreq * this.t);
+                        }
+                        
+                        const dv = v - Math.pow(v, 3)/3 - w + this.I + forcing;
+                        const dw = this.epsilon * (v + this.a - this.b * w);
+                        
+                        const mag = Math.sqrt(dv*dv + dw*dw);
+                        if (mag > 0) {
+                            const scale = 12 / Math.max(mag, 0.1);
+                            const dx = dv * scale;
+                            const dy = -dw * scale;
+                            
+                            ctx.beginPath();
+                            ctx.moveTo(i, j);
+                            ctx.lineTo(i + dx, j + dy);
+                            ctx.stroke();
+                            
+                            // Arrow head
+                            const angle = Math.atan2(dy, dx);
+                            const arrowSize = 3;
+                            ctx.beginPath();
+                            ctx.moveTo(i + dx, j + dy);
+                            ctx.lineTo(i + dx - arrowSize*Math.cos(angle-0.5), j + dy - arrowSize*Math.sin(angle-0.5));
+                            ctx.moveTo(i + dx, j + dy);
+                            ctx.lineTo(i + dx - arrowSize*Math.cos(angle+0.5), j + dy - arrowSize*Math.sin(angle+0.5));
+                            ctx.stroke();
+                        }
+                    }
+                }
+                
+                // Find and mark fixed points
+                this.drawFixedPoints(ctx, canvas);
+                
+                // Labels
+                ctx.fillStyle = '#4ecdc4';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.fillText('v-nullcline (dv/dt = 0)', 10, 20);
+                ctx.fillStyle = '#ff9ff3';
+                ctx.fillText('w-nullcline (dw/dt = 0)', 10, 35);
+                
+                // Axis labels
+                ctx.fillStyle = '#4a5568';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText('v', canvas.width - 20, canvas.height/2 - 10);
+                ctx.fillText('w', canvas.width/2 + 10, 20);
+            }
+            
+            drawFixedPoints(ctx, canvas) {
+                // Find intersections of nullclines (fixed points)
+                const fixedPoints = this.findFixedPoints();
+                
+                fixedPoints.forEach(fp => {
+                    const x = (fp.v + 3) / 6 * canvas.width;
+                    const y = (-fp.w + 2) / 4 * canvas.height;
+                    
+                    if (x >= 0 && x <= canvas.width && y >= 0 && y <= canvas.height) {
+                        // Draw fixed point
+                        ctx.fillStyle = fp.stable ? '#2d3748' : '#e53e3e';
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 6, 0, 2*Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                        
+                        // Label
+                        ctx.fillStyle = '#2d3748';
+                        ctx.font = '10px sans-serif';
+                        ctx.fillText(fp.stable ? 'Stable' : 'Unstable', x + 10, y - 10);
+                    }
+                });
+            }
+            
+            findFixedPoints() {
+                // Simplified fixed point finding for display purposes
+                const points = [];
+                
+                // The fixed points satisfy:
+                // v - v³/3 - w + I = 0  →  w = v - v³/3 + I
+                // v + a - bw = 0       →  w = (v + a)/b
+                
+                // So: v - v³/3 + I = (v + a)/b
+                // Solving: b(v - v³/3 + I) = v + a
+                //          bv - bv³/3 + bI = v + a
+                //          v(b - 1) - bv³/3 = a - bI
+                
+                // This is a cubic equation. For visualization, we'll sample and find approximate roots
+                for (let v = -3; v <= 3; v += 0.1) {
+                    const w1 = v - Math.pow(v, 3)/3 + this.I;
+                    const w2 = (v + this.a) / this.b;
+                    
+                    if (Math.abs(w1 - w2) < 0.05) {
+                        // Check stability using linearization
+                        const J11 = 1 - v*v;  // ∂(dv/dt)/∂v
+                        const J12 = -1;       // ∂(dv/dt)/∂w  
+                        const J21 = this.epsilon;  // ∂(dw/dt)/∂v
+                        const J22 = -this.b * this.epsilon;  // ∂(dw/dt)/∂w
+                        
+                        const trace = J11 + J22;
+                        const det = J11 * J22 - J12 * J21;
+                        
+                        const stable = (trace < 0 && det > 0);
+                        
+                        points.push({v: v, w: w1, stable: stable});
+                    }
+                }
+                
+                return points;
+            }
+            
+            drawParameterMap() {
+                const ctx = this.paramCtx;
+                const canvas = this.paramCanvas;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Parameter ranges for the map
+                const aMin = -2, aMax = 2;
+                const IMin = -0.5, IMax = 1.5;  // Using I instead of epsilon for better visualization
+                
+                // Create parameter space visualization
+                const imageData = ctx.createImageData(canvas.width, canvas.height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < canvas.width; i++) {
+                    for (let j = 0; j < canvas.height; j++) {
+                        const a = aMin + (i / canvas.width) * (aMax - aMin);
+                        const I = IMax - (j / canvas.height) * (IMax - IMin);
+                        
+                        let color = this.classifyParameterRegime(a, this.b, this.epsilon, I);
+                        
+                        const idx = (j * canvas.width + i) * 4;
+                        data[idx] = color[0];     // R
+                        data[idx + 1] = color[1]; // G
+                        data[idx + 2] = color[2]; // B
+                        data[idx + 3] = 255;      // A
+                    }
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                
+                // Draw current parameter point
+                const currentX = ((this.a - aMin) / (aMax - aMin)) * canvas.width;
+                const currentY = ((IMax - this.I) / (IMax - IMin)) * canvas.height;
+                
+                ctx.fillStyle = 'black';
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(currentX, currentY, 8, 0, 2*Math.PI);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Axes labels
+                ctx.fillStyle = '#2d3748';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.fillText('a (excitability parameter)', canvas.width/2 - 100, canvas.height - 15);
+                
+                ctx.save();
+                ctx.translate(20, canvas.height/2);
+                ctx.rotate(-Math.PI/2);
+                ctx.fillText('I (external current)', -80, 0);
+                ctx.restore();
+                
+                // Draw grid and labels
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                
+                // Vertical grid lines
+                for (let i = 1; i < 4; i++) {
+                    const x = (i / 4) * canvas.width;
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                    
+                    const aVal = aMin + (i / 4) * (aMax - aMin);
+                    ctx.fillStyle = 'white';
+                    ctx.font = '12px sans-serif';
+                    ctx.fillText(aVal.toFixed(1), x - 10, canvas.height - 35);
+                }
+                
+                // Horizontal grid lines  
+                for (let j = 1; j < 4; j++) {
+                    const y = (j / 4) * canvas.height;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                    
+                    const IVal = IMax - (j / 4) * (IMax - IMin);
+                    ctx.fillStyle = 'white';
+                    ctx.fillText(IVal.toFixed(1), 5, y + 5);
+                }
+                
+                ctx.setLineDash([]);
+            }
+            
+            classifyParameterRegime(a, b, epsilon, I) {
+                // Simplified classification based on parameter combinations
+                
+                // Excitable regime: I near 0, moderate a
+                if (Math.abs(I) < 0.1 && a > 0 && a < 1.2) {
+                    return [255, 107, 107]; // Red
+                }
+                
+                // Oscillatory regime: positive I drives oscillations
+                if (I > 0.3 && I < 1.2 && a > 0) {
+                    return [78, 205, 196]; // Teal
+                }
+                
+                // Bistable regime: negative a, low current
+                if (a < -0.2 && Math.abs(I) < 0.3) {
+                    return [69, 183, 209]; // Blue
+                }
+                
+                // Chaotic/complex regime: high current or extreme parameters
+                if (I > 1.0 || (I > 0.4 && Math.abs(a) > 1)) {
+                    return [240, 147, 251]; // Purple
+                }
+                
+                // Default/transition regions
+                return [200, 200, 200]; // Gray
+            }
+            
+            animate() {
+                // Multiple integration steps per frame for smoother dynamics
+                const stepsPerFrame = this.currentMode === 'chaotic' ? 5 : 3;
+                
+                for (let i = 0; i < stepsPerFrame; i++) {
+                    this.step();
+                }
+                
+                // Draw all visualizations
+                this.drawTimeSeries();
+                this.drawPhasePortrait();
+                this.drawNullclines();
+                
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            new FHNOscillator();
+        });
+    </script>
+</body>
+</html>
